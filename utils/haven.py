@@ -18,7 +18,8 @@ class SafeHaven:
     BASE_URL = "https://api.sandbox.safehavenmfb.com"
 
     @retry(
-    stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60))
+        stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60)
+    )
     async def post(self, url, payload, has_token=False):
         if not self.TOKEN:
             await self.get_token()
@@ -27,7 +28,7 @@ class SafeHaven:
         if has_token:
             headers["authorization"] = f"Bearer {self.TOKEN}"
             headers["ClientID"] = f"1c535816a213693412a3f1162f6a021c"
-            
+
         response = requests.post(self.BASE_URL + url, json=payload, headers=headers)
         if (
             "message" in response.json()
@@ -42,9 +43,9 @@ class SafeHaven:
         # print(response.text)  # REMOVE LATER
         return response.json()
 
-
     @retry(
-    stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60))
+        stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60)
+    )
     async def get(self, url):
         if not self.TOKEN:
             await self.get_token()
@@ -70,9 +71,9 @@ class SafeHaven:
         # print(response.text)  # REMOVE LATER
         return response.json()
 
-
     @retry(
-    stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60))
+        stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60)
+    )
     async def get_token(self):
 
         if not self.ACCERTION:
@@ -100,9 +101,9 @@ class SafeHaven:
             print(error)
             return {"error": "Could not get access token"}
 
-
     @retry(
-    stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60))
+        stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60)
+    )
     async def refresh_token(self):
 
         if not self.RTOKEN:
@@ -131,85 +132,5 @@ class SafeHaven:
             print(error)
             return {"error": "Could not get access token"}
 
-    async def get_accounts(self):
 
-        url = "/accounts?limit=100&isSubAccount=true"
-
-        try:
-            response = await self.get(url)
-            return response
-
-        except Exception as error:
-            print(error)
-            return {"error": "Could not get accounts"}
-
-    async def get_services(self):
-
-        url = "/vas/services"
-
-        try:
-            response = await self.get(url)
-            return response
-
-        except Exception as error:
-            print(error)
-            return {"error": "Could not get services"}
-
-    async def get_categories(self, service_id):
-
-        url = f"/vas/service/{service_id}/service-categories"
-
-        try:
-            response = await self.get(url)
-            return response
-
-        except Exception as error:
-            print(error)
-            return {"error": "Could not get categories"}
-        
-    async def create_account(self, payload):
-
-        url = "/accounts/subaccount"
-
-        try:
-            response = await self.post(url, payload, has_token=True)
-            return response
-
-        except Exception as error:
-            print(error)
-            return {"error": "Could not create account"}
-        
-
-    async def get_account(self, account_id):
-
-        url = f"/accounts/{account_id}"
-
-        try:
-            response = await self.get(url)
-            return response
-
-        except Exception as error:
-            print(error)
-            return {"error": "Could not get categories"}
-
-    async def has_funds(self, account_id, amount):
-        account = await self.get_account(account_id)
-        if "data" in account:
-            return [int(account["data"]["accountBalance"]) > int(amount), account["data"]["accountBalance"]]
-
-
-    async def verify_util(self, meter_number, service_id):
-
-        url = "/vas/verify"
-        payload = {
-            "entityNumber": meter_number,
-            "serviceCategoryId": service_id
-        }
-
-        try:
-            response = await self.post(url,payload,has_token=True)
-            return response
-
-        except Exception as error:
-            print(error)
-            return {"error": "Could not get categories"}
+safehaven_client = SafeHaven()

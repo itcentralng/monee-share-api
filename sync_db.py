@@ -27,8 +27,10 @@ class User(BaseModel):
 
 
 async def sync_users():
+    from accounts import bank
+
     count = 0
-    users = await haven.get_accounts()
+    users = await bank.get_accounts()
     if "data" in users:
         for user in users["data"]:
             payload = {
@@ -41,6 +43,8 @@ async def sync_users():
                 "bvn": user["subAccountDetails"]["bvn"],
                 # "nin": user["subAccountDetails"]["nin"] or "",
                 "nin": "",
+                "password": "password",
+                "pin": "1234",
             }
             convex_client.mutation(
                 "users:insert",
@@ -54,6 +58,7 @@ async def sync_users():
 
 
 async def sync_services():
+    # from accounts import account as haven
     count = 0
     services = await haven.get_services()
     if "data" in services:
@@ -113,7 +118,7 @@ async def sync_categories():
 
 @router.get("/")
 async def sync():
-    # await sync_users()
+    await sync_users()
     # await sync_services()
     # await sync_categories()
     return {"status": 200, "message": "successfully synced"}
