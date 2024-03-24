@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import requests
 import time
 from tenacity import retry, stop_after_attempt, wait_exponential
+from lib.crypt import generate_accertion
 
 
 load_dotenv()
@@ -11,7 +12,8 @@ load_dotenv()
 class SafeHaven:
     TOKEN = None
     RTOKEN = None
-    ACCERTION = os.environ.get("SAFEHAVEN_ACCERTION")
+    ACCERTION = generate_accertion()
+    # ACCERTION = os.environ.get("SAFEHAVEN_ACCERTION")
     CLIENT_ID = os.environ.get("SAFEHAVEN_CLIENT_ID")
     EXPIRES_IN = None
     LAST_TOKEN_REFRESH = None
@@ -30,6 +32,15 @@ class SafeHaven:
             headers["ClientID"] = f"1c535816a213693412a3f1162f6a021c"
 
         response = requests.post(self.BASE_URL + url, json=payload, headers=headers)
+
+        if (
+            "error_description" in response.json()
+            and "invalid client_assertion"
+            in response.json()["error_description"].lower()
+        ):
+            self.ACCERTION = generate_accertion()
+            await self.get_token()
+            response = requests.post(self.BASE_URL + url, json=payload, headers=headers)
         if (
             "message" in response.json()
             and "expired token" in response.json()["message"].lower()
@@ -40,7 +51,6 @@ class SafeHaven:
             response = requests.post(self.BASE_URL + url, json=payload, headers=headers)
 
         print("POST")
-        # print(response.text)  # REMOVE LATER
         return response.json()
 
     @retry(
@@ -59,6 +69,14 @@ class SafeHaven:
         response = requests.get(self.BASE_URL + url, headers=headers)
 
         if (
+            "error_description" in response.json()
+            and "invalid client_assertion"
+            in response.json()["error_description"].lower()
+        ):
+            self.ACCERTION = generate_accertion()
+            await self.get_token()
+            response = requests.get(self.BASE_URL + url, headers=headers)
+        elif (
             "message" in response.json()
             and "expired token" in response.json()["message"].lower()
             and self.RTOKEN
@@ -68,7 +86,6 @@ class SafeHaven:
             response = requests.post(self.BASE_URL + url, headers=headers)
 
         print("GET")
-        # print(response.text)  # REMOVE LATER
         return response.json()
 
     @retry(
@@ -92,6 +109,7 @@ class SafeHaven:
             response = requests.post(
                 self.BASE_URL + url, json=payload, headers=headers
             ).json()
+            print(response)
             self.TOKEN = response["access_token"]
             self.RTOKEN = response["refresh_token"]
             self.EXPIRES_IN = response["expires_in"]
@@ -123,6 +141,7 @@ class SafeHaven:
             response = requests.post(
                 self.BASE_URL + url, json=payload, headers=headers
             ).json()
+            print(response)
             self.TOKEN = response["access_token"]
             self.RTOKEN = response["refresh_token"]
             self.EXPIRES_IN = response["expires_in"]
