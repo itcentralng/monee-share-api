@@ -2,6 +2,7 @@ from . import db as database
 from . import bank as haven
 from accounts import account
 from lib.sms import AfricasTalking
+from messages import db as msg_database
 
 
 async def send(data):
@@ -85,6 +86,13 @@ async def send(data):
                         af_sms.send(
                             f"Account created for {command[2]}", [From], AF_number
                         )
+                    await msg_database.add_message(
+                        {
+                            "phone": From,
+                            "role": "bot",
+                            "content": response,
+                        }
+                    )
 
                     response = f"""Welcome to Monee Share
                         Your account was created successfully.
@@ -96,6 +104,13 @@ async def send(data):
 
                         For more information, send help"
                     """
+                    await msg_database.add_message(
+                        {
+                            "phone": command[2],
+                            "role": "bot",
+                            "content": response,
+                        }
+                    )
                     if AF_number:
                         af_sms = AfricasTalking()
                         af_sms.send(response, [command[2]], AF_number)
@@ -137,15 +152,3 @@ async def send(data):
                             else:
                                 response = f"There was a problem sending N{command[1]} to {command[2]}. Try again"
     return response
-
-    # use africastalking/signalwire to send
-    # response = f"""Welcome to Monee Share
-    #     Your account was created successfully.
-    #     Use your phone number to send/receive money on Monee Share
-
-    #     to fund your account from other banks use:
-    #     Account Number: {account["accountNumber"]}
-    #     Bank: Safehaven MFB
-
-    #     For more information, send help"
-    # """
