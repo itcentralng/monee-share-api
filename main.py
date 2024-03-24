@@ -6,7 +6,7 @@ from accounts import account as account_controller
 from utility import utility
 from transactions import transaction
 from messages import db as msg_database
-import lib.signalwire as signalwire
+import lib.sigwire as sigwire
 from transactions import db as transaction_db
 from lib.sms import AfricasTalking
 import logging
@@ -120,7 +120,7 @@ async def receive_sms(request: Request):
         print(payload)
         await transaction_db.add_transaction(payload)
 
-        signalwire.make_call(From)
+        sigwire.make_call(From)
 
     else:
         response = f'Command not understood.\nText "help" for the list of all commands'
@@ -137,9 +137,10 @@ async def receive_sms(request: Request):
     print(response)
 
     # SEND MESSAGE IF MESSAGE IS FROM AFRICASTALKING
-    if AF_number:
-        af_sms = AfricasTalking()
-        af_sms.send(response, [From], AF_number)
+    # if AF_number:
+    af_sms = AfricasTalking()
+    # af_sms.send(response, [From], AF_number)
+    af_sms.send(response, ["+2348181114416"], 9011)
 
     msg_res = MessagingResponse()
     msg_res.message(response)
@@ -187,3 +188,13 @@ async def sync():
 
     await sync_users()
     return {"message": "successful"}
+
+
+@app.post("/test")
+async def sync(request: Request):
+    req = await request.json()
+    form = await request.form()
+    body = await request.body()
+    print(req)
+    print(form)
+    print(body)
