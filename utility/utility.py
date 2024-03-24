@@ -12,9 +12,13 @@ async def buy(data):
             {"account_id": sender_account["safehavenId"], "amount": command[1]}
         )
 
-        # if False:
-        if not has_funds:
-            response = f"Insufficient funds !.\nAccount balance: N{balance}. \nFund your account and try again"
+        # if not has_funds:
+        if False:
+            if balance is None:
+                response = f"Something went wrong on our side. Please try again"
+            else:
+                response = f"Insufficient funds !.\nAccount balance: N{balance}. \nFund your account and try again"
+
         else:
             discos = await database.get_discos_by_state(command[3])
             current_disco = None
@@ -34,7 +38,6 @@ async def buy(data):
 
                 print(meter)
                 if meter:
-                    response = f"""Name: {meter["name"]}\nAddress: {meter["address"]}\n\nEnter your pin to confirm\nAmount: {command[1]}"""
                     payload = {
                         "amount": int(command[1]),
                         "channel": "WEB",
@@ -46,11 +49,14 @@ async def buy(data):
                     payment_response = await haven.pay_util(payload)
                     print(payment_response)
                     if not payment_response.get("data"):
+                        response = f"""Could not buy utility for\n\nName: {meter["name"]}\nAddress: {meter["address"]}\nAmount: {command[1]}\nTry again later"""
                         print(payment_response)
-                        response = f"Could not buy utility. Try again later"
+
                     else:
                         print(payment_response)
-                        response = f"payment successfull"
+                        payment_response = payment_response.get("data")
+
+                        response = f"""Utility purchase successful.\nName: {meter["name"]}\nAddress: {meter["address"]}\n\nEnter your pin to confirm\nAmount: {command[1]}\nTry again later\nToken: {payment_response.get("utilityToken")}"""
 
                 else:
                     response = f"Could not verify your utility. Check the meter number"
