@@ -1,4 +1,4 @@
-from utils.haven import safehaven_client
+from lib.haven import safehaven_client
 
 
 async def get_accounts():
@@ -15,6 +15,7 @@ async def get_accounts():
 
 
 async def get_account(account_id):
+    print(account_id)
 
     url = f"/accounts/{account_id}"
 
@@ -48,3 +49,6 @@ async def has_funds(account_id, amount):
             int(account["data"]["accountBalance"]) > int(amount),
             account["data"]["accountBalance"],
         ]
+
+    elif account.get("statusCode") == 403:
+        return [False, None]
