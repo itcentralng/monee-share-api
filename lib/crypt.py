@@ -1,5 +1,9 @@
 import jwt
 import time
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 payload = {
     "iss": "moneeshare.com",
@@ -10,7 +14,17 @@ payload = {
 }
 
 # Load your private key for signing the token
-with open("keys/privatekey.pem", "r") as file:
+IS_PRODUCTION = os.environ.get("PRODUCTION_ENV")
+
+if IS_PRODUCTION == "True":
+    print("Production Env")
+    file_path = "/etc/secrets/privatekey.pem"
+else:
+    print("Dev Env")
+    file_path = "etc/secrets/privatekey.pem"
+
+
+with open(file_path, "r") as file:
     private_key = file.read()
 
 
