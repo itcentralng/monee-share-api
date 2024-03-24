@@ -9,10 +9,19 @@ from messages import db as msg_database
 import lib.signalwire as signalwire
 from transactions import db as transaction_db
 from lib.sms import AfricasTalking
+import logging
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 load_dotenv()
 app = FastAPI()
+
+
+@app.get("/")
+async def index():
+    return {"app": "Monee Share", "status": "ok"}
 
 
 @app.post("/sms")
