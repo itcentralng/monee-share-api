@@ -1,3 +1,4 @@
+import os
 from fastapi import Request, FastAPI, Response
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.twiml.voice_response import VoiceResponse, Gather
@@ -10,6 +11,8 @@ import lib.sigwire as sigwire
 from transactions import db as transaction_db
 from lib.sms import AfricasTalking
 import logging
+from starlette.datastructures import FormData
+
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -17,6 +20,8 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 load_dotenv()
 app = FastAPI()
+af_sms = AfricasTalking()
+af_number = os.environ.get("AFRICASTALKING_SENDER")
 
 
 @app.get("/")
@@ -26,17 +31,22 @@ async def index():
 
 @app.post("/sms")
 async def receive_sms(request: Request):
-    resp = await request.form()
-    Body = resp.get("Body")
-    From = resp.get("From")
-    AF_number = resp.get("to")
+    if isinstance(request, FormData):
+        req = dict(request)
+    else:
+        req = await request.form()
 
-    print(resp)
+    Body = req.get("Body")
+    From = req.get("From")
+    AF_number = req.get("to")
+
+    print(req)
     if not Body:
-        From = resp.get("from")
-        Body = resp.get("text")
+        From = req.get("from")
+        Body = req.get("text")
 
     Body = Body.lower()
+    Body = Body.replace("mshare", "")
     command = Body.split()
 
     response = ""
@@ -77,6 +87,8 @@ async def receive_sms(request: Request):
     # START OF CREATE
     elif "create" in Body:
         response = await account_controller.create({"sender": From, "command": command})
+        if response.get("_id"):
+            response = f'Welcome to Monee Share.\nYour account was created successfully.\nUse your phone number to send/receive money on Monee Share.\n\nto fund your account from other banks use:\nAccount Number: {response.get("accountNumber")}.\nBank: Safehaven MFB.\n\nFor more information, send "help" to {af_number}'
 
     # END OF CREATE
 
@@ -92,9 +104,10 @@ async def receive_sms(request: Request):
             "type": "send",
             "user": From,
         }
-        print(payload)
-        await transaction_db.add_transaction(payload)
-        # signalwire.make_call(From)
+        # print(payload)
+
+        # await transaction_db.add_transaction(payload)
+        # make call
 
     # END OF UTIL
 
@@ -102,23 +115,10 @@ async def receive_sms(request: Request):
     elif "send" in Body and "error" not in sender_account:
         response = await transaction.send(
             {
-                "sender": From,
                 "sender_account": sender_account,
                 "command": command,
-                "msg": Body,
-                "AF_NUMBER": AF_number,
-                "From": From,
             }
         )
-
-        payload = {
-            "command": Body,
-            "status": "pending",
-            "type": "send",
-            "user": From,
-        }
-        print(payload)
-        await transaction_db.add_transaction(payload)
 
         sigwire.make_call(From)
 
@@ -136,15 +136,8 @@ async def receive_sms(request: Request):
     )
     print(response)
 
-    # SEND MESSAGE IF MESSAGE IS FROM AFRICASTALKING
-    # if AF_number:
-    af_sms = AfricasTalking()
-    # af_sms.send(response, [From], AF_number)
-    af_sms.send(response, ["+2348181114416"], 9011)
-
-    msg_res = MessagingResponse()
-    msg_res.message(response)
-    return Response(content=str(msg_res), media_type="application/xml")
+    # SEND MESSAGE
+    af_sms.send(response, [From])
 
 
 @app.post("/call_receiver")
@@ -163,19 +156,42 @@ def call_receiver(request: Request):
 async def call_handler(request: Request):
     req = await request.form()
     digits = req.get("Digits")
-
+    From = req.get("From")
     response = VoiceResponse()
-    print(req)
+
+    sender_account = await account_controller.get_account_from_db({"phone": From})
+    if not sender_account.get("_id"):
+        response.say(
+            f"It seems you don't have an account. send help to {' '.join(af_number.split())}"
+        )
+        return Response(content=response.to_xml(), media_type="text/xml")
 
     if digits:
-        response.say("thank you. Your transaction will be processed")
-        is_valid_pin = await account_controller.verify_pin(digits)
+        is_valid_pin = await account_controller.verify_pin(
+            {"phone": From, "pin": digits}
+        )
         if is_valid_pin:
-            # process transaction
-            transct = await transaction_db.get_transaction({"phone": req.get("From")})
-            await receive_sms(
-                {"From": transct.get("user"), "Body": transct.get("command")}
-            )
+            transct = await transaction_db.get_transaction({"phone": From})
+            transaction_type = transct.get("type")
+            response.say("thank you. Your transaction will be processed")
+            response.hangup()
+
+            if transaction_type == "transfer":
+                trasaction_response, transaction_status = (
+                    await transaction.make_transfer(
+                        sender_account, transct.get("command").split()[2]
+                    )
+                )
+                print(trasaction_response)
+            elif transaction_type == "util":
+                # handle utility
+                # verify meter number
+                # check balance
+                # proceed with payment
+                pass
+
+        else:
+            response.say("Your pin is incorrect. confirm the pin and try again")
     else:
         response.say("Invalid input. Please try again.")
 
@@ -188,13 +204,3 @@ async def sync():
 
     await sync_users()
     return {"message": "successful"}
-
-
-@app.post("/test")
-async def sync(request: Request):
-    req = await request.json()
-    form = await request.form()
-    body = await request.body()
-    print(req)
-    print(form)
-    print(body)

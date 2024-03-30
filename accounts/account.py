@@ -16,6 +16,7 @@ async def create(data):
 
     if not account.get("data"):
         response = f"There was a problem creating account. Please try again later"
+        return response
     else:
         account = account.get("data")
         payload = {
@@ -34,18 +35,7 @@ async def create(data):
         db_response = await database.create_account(payload)
         print(db_response)
 
-        response = f"""Welcome to Monee Share
-            Your account was created successfully.
-            Use your phone number to send/receive money on Monee Share
-
-            to fund your account from other banks use:
-            Account Number: {account["accountNumber"]}
-            Bank: Safehaven MFB
-
-            For more infotmation, send  help"
-        """
-
-    return response
+    return account
 
 
 async def get_balance(data):

@@ -15,10 +15,13 @@ class AfricasTalking:
     sms = africastalking.SMS
 
     @retry(
-    stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60))
-    def send(self, message, recipients,sender):
+        stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60)
+    )
+    def send(self, message, recipients):
         try:
-            response = self.sms.send(message, recipients, sender)
+            response = self.sms.send(
+                message, recipients, os.environ.get("AFRICASTALKING_SENDER")
+            )
             print(response)
         except Exception as e:
             print(f"Houston, we have a problem: {e}")
