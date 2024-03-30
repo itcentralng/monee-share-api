@@ -65,7 +65,7 @@ async def receive_sms(request: Request):
 
     # HELP
     if "help" in Body:
-        response = f"""List of commands:\n1. create -> create [NIN/BVN]\n2. send -> send [AMOUNT] [PHONE_NUMBER]\n3. util -> util [AMOUNT] [METER_NUM] [STATE]\n4. balance -> balance\n5. help -> help"""
+        response = f"""List of commands and how to use them:\n1. create -> create [NIN/BVN]\n2. send -> send [AMOUNT] [PHONE_NUMBER]\n3. util -> util [AMOUNT] [METER_NUM] [STATE]\n4. balance -> balance\n5. help -> help"""
     # END OF HELP
 
     elif "error" in sender_account and "create" not in Body:
@@ -94,20 +94,26 @@ async def receive_sms(request: Request):
 
     # UTIL
     elif "util" in Body and "error" not in sender_account:
-        response = await utility.buy(
-            {"sender_account": sender_account, "command": command}
-        )
+        if len(command) < 4:
+            response = f'Information provided is not formatted correctly. please send "help" for details on the command'
+        else:
+            verification_response = await utility.verify(
+                {"sender_account": sender_account, "command": command}
+            )
 
-        payload = {
-            "command": Body,
-            "status": "pending",
-            "type": "send",
-            "user": From,
-        }
-        # print(payload)
+            if verification_response:
+                response = f"You are buying N{command[1]} credit for {command[2]}. \n\nYou will get a call from us to enter your pin for confirmation"
+                payload = {
+                    "command": Body,
+                    "status": "pending",
+                    "type": "util",
+                    "user": From,
+                }
+                await transaction_db.add_transaction(payload)
 
-        # await transaction_db.add_transaction(payload)
-        # make call
+                sigwire.make_call(From)
+            else:
+                response = f"Could not verify meter number {command[2]}"
 
     # END OF UTIL
 
@@ -140,26 +146,15 @@ async def receive_sms(request: Request):
     af_sms.send(response, [From])
 
 
-@app.post("/call_receiver")
-def call_receiver(request: Request):
-    response = VoiceResponse()
-    gather = Gather(action=request.url_for("call_handler"), method="POST", numDigits=4)
-    gather.say("Welcome! Please dial in your pin number, to confirm transaction.")
-
-    response.append(gather)
-    response.say("We did not receive any input. Goodbye!")
-
-    return Response(response.to_xml(), mimetype="text/xml")
-
-
 @app.post("/call")
 async def call_handler(request: Request):
     req = await request.form()
     digits = req.get("Digits")
-    From = req.get("From")
+    To = req.get("To")
     response = VoiceResponse()
 
-    sender_account = await account_controller.get_account_from_db({"phone": From})
+    sender_account = await account_controller.get_account_from_db({"phone": To})
+    print(sender_account, req)
     if not sender_account.get("_id"):
         response.say(
             f"It seems you don't have an account. send help to {' '.join(af_number.split())}"
@@ -167,11 +162,9 @@ async def call_handler(request: Request):
         return Response(content=response.to_xml(), media_type="text/xml")
 
     if digits:
-        is_valid_pin = await account_controller.verify_pin(
-            {"phone": From, "pin": digits}
-        )
+        is_valid_pin = await account_controller.verify_pin({"phone": To, "pin": digits})
         if is_valid_pin:
-            transct = await transaction_db.get_transaction({"phone": From})
+            transct = await transaction_db.get_transaction({"phone": To})
             transaction_type = transct.get("type")
             response.say("thank you. Your transaction will be processed")
             response.hangup()
@@ -184,11 +177,12 @@ async def call_handler(request: Request):
                 )
                 print(trasaction_response)
             elif transaction_type == "util":
-                # handle utility
-                # verify meter number
-                # check balance
-                # proceed with payment
-                pass
+                response = await utility.buy(
+                    {
+                        "sender_account": sender_account,
+                        "command": transct.get("command"),
+                    }
+                )
 
         else:
             response.say("Your pin is incorrect. confirm the pin and try again")

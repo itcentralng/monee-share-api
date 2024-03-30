@@ -3,6 +3,45 @@ from . import bank as haven
 from accounts import account
 
 
+async def verify(data):
+    sender_account, command = data.values()
+    has_funds, balance = await account.has_funds(
+        {"account_id": sender_account["safehavenId"], "amount": command[1]}
+    )
+
+    # if not has_funds:
+    if False:
+        if balance is None:
+            response = f"Something went wrong on our side. Please try again"
+        else:
+            response = f"Insufficient funds !.\nAccount balance: N{balance}. \nFund your account and try again"
+
+    else:
+        discos = await database.get_discos_by_state(command[3])
+        meter = None
+        print(discos)
+
+        if not len(discos):
+            return False
+        else:
+            for disco in discos:
+                meter = await haven.verify_util(command[2], disco["safehavenId"])
+                if "data" in meter:
+                    current_disco = disco
+                    meter = meter["data"]
+                    break
+                else:
+                    meter = None
+
+            print(meter)
+            if meter:
+                return True
+            else:
+                return False
+
+    return response
+
+
 async def buy(data):
     sender_account, command = data.values()
     if len(command) < 4:
@@ -25,7 +64,7 @@ async def buy(data):
             meter = None
             print(discos)
             if not len(discos):
-                response = f'Please enter a valid state name or send  help" for details on the command'
+                response = f'Please enter a valid state name or send "help" for details on the command'
             else:
                 for disco in discos:
                     meter = await haven.verify_util(command[2], disco["safehavenId"])

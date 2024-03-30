@@ -9,7 +9,6 @@ af_sms = AfricasTalking()
 
 
 async def send(data):
-    global responses
     (sender_account, command) = data.values()
 
     has_funds, balance = await account.has_funds(
