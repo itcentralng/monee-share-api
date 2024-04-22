@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import requests
 import time
 from tenacity import retry, stop_after_attempt, wait_exponential
-from lib.crypt import generate_accertion
+from lib._crypt0 import generate_accertion
 
 
 load_dotenv()

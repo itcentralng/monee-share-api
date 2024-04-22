@@ -5,7 +5,7 @@ from convex import ConvexClient
 from fastapi import APIRouter
 from pydantic import BaseModel
 from fastapi.encoders import jsonable_encoder
-from lib.haven import SafeHaven
+from lib._safehaven import SafeHaven
 
 router = APIRouter()
 haven = SafeHaven()

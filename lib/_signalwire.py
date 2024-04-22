@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from lib.db import convex_client as database
-from lib.haven import safehaven_client as haven
+from lib._safehaven import safehaven_client as haven
 import os
 from dotenv import load_dotenv
 import requests

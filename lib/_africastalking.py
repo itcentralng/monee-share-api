@@ -17,7 +17,7 @@ class AfricasTalking:
     @retry(
         stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60)
     )
-    def send(self, message, recipients):
+    def send(self, message: str, recipients: list[str]):
         try:
             response = self.sms.send(
                 message, recipients, os.environ.get("AFRICASTALKING_SENDER")
