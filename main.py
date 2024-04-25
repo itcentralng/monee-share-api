@@ -102,7 +102,7 @@ async def receive_sms(request: Request):
             )
 
             if verification_response:
-                response = f"You are buying N{command[1]} unit for \nMeter Number: {command[2]}\nOwner: {verification_response["name"]}. \n\nYou will get a call from us to enter your pin for confirmation"
+                response = f"You are buying N{command[1]} unit for \nMeter Number: {command[2]}\nOwner: {verification_response['name']}. \n\nYou will get a call from us to enter your pin for confirmation"
                 payload = {
                     "command": Body,
                     "status": "pending",
