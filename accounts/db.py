@@ -9,7 +9,7 @@ async def create_account(user):
 
 @retry(stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60))
 async def get_account(phone):
-    return convex_client.mutation("users:getSingleByPhone", {"phone": phone})
+    return convex_client.query("users:getSingleByPhone", {"phone": phone})
 
 
 @retry(stop=stop_after_attempt(4), wait=wait_exponential(multiplier=1, min=1, max=60))

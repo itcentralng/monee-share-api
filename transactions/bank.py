@@ -1,4 +1,4 @@
-from lib.haven import safehaven_client
+from lib._safehaven import safehaven_client
 
 
 async def name_enquiry(payload):

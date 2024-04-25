@@ -1,7 +1,7 @@
 from . import db as database
 from . import bank as haven
 from accounts import account
-from lib.sms import AfricasTalking
+from lib._africastalking import AfricasTalking
 from messages import db as msg_database
 from transactions import db as transaction_db
 

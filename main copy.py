@@ -7,15 +7,15 @@ from accounts import account as account_controller
 from utility import utility
 from transactions import transaction
 from messages import db as msg_database
-import lib._signalwire as sigwire
+import lib._signalwire as sigalwire
 from transactions import db as transaction_db
 from lib._africastalking import AfricasTalking
 import logging
 from starlette.datastructures import FormData
 
 
-logging.getLogger("requests").setLevel(logging.ERROR)
-logging.getLogger("urllib3").setLevel(logging.ERROR)
+logging.getLogger("requests").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
 load_dotenv()
@@ -100,7 +100,6 @@ async def receive_sms(request: Request):
             verification_response = await utility.verify(
                 {"sender_account": sender_account, "command": command}
             )
-
             if verification_response:
                 response = f"You are buying N{command[1]} unit for \nMeter Number: {command[2]}\nOwner: {verification_response["name"]}. \n\nYou will get a call from us to enter your pin for confirmation"
                 payload = {
@@ -111,7 +110,7 @@ async def receive_sms(request: Request):
                 }
                 await transaction_db.add_transaction(payload)
 
-                sigwire.make_call(From)
+                sigalwire.make_call(From)
             else:
                 response = f"Could not verify meter number {command[2]}"
 
@@ -126,7 +125,7 @@ async def receive_sms(request: Request):
             }
         )
 
-        sigwire.make_call(From)
+        sigalwire.make_call(From)
 
     else:
         response = f'Command not understood.\nText "help" for the list of all commands'
@@ -144,14 +143,14 @@ async def receive_sms(request: Request):
 
     # SEND MESSAGE
     af_sms.send(response, [From])
-    return {"message": response}
 
 
 @app.post("/call")
 async def call_handler(request: Request):
     req = await request.form()
     digits = req.get("Digits")
-    To = req.get("To")
+    # To = req.get("To")
+    To = req.get("From")
     response = VoiceResponse()
 
     sender_account = await account_controller.get_account_from_db({"phone": To})
@@ -178,12 +177,13 @@ async def call_handler(request: Request):
                 )
                 print(trasaction_response)
             elif transaction_type == "util":
-                response = await utility.buy(
+                util_response = await utility.buy(
                     {
                         "sender_account": sender_account,
                         "command": transct.get("command"),
                     }
                 )
+                print(util_response)
 
         else:
             response.say("Your pin is incorrect. confirm the pin and try again")

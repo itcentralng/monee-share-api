@@ -35,9 +35,9 @@ async def verify(data):
 
             print(meter)
             if meter:
-                return True
+                return meter
             else:
-                return False
+                return None
 
     return response
 
