@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 class SMSModel(BaseModel):
     date: str | None = None
-    from_: str = Field(alias=("from", "From"))
+    from_: str = Field(alias=("from"))
     id: str | None = None
     linkId: str | None = None
     text: str | None = None

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import requests
 import time
 from tenacity import retry, stop_after_attempt, wait_exponential
-from lib._crypt0 import generate_accertion
+from lib._crypto import generate_accertion
 
 
 load_dotenv()
@@ -13,7 +13,6 @@ class SafeHaven:
     TOKEN = None
     RTOKEN = None
     ACCERTION = generate_accertion()
-    # ACCERTION = os.environ.get("SAFEHAVEN_ACCERTION")
     CLIENT_ID = os.environ.get("SAFEHAVEN_CLIENT_ID")
     EXPIRES_IN = None
     LAST_TOKEN_REFRESH = None
@@ -109,7 +108,6 @@ class SafeHaven:
             response = requests.post(
                 self.BASE_URL + url, json=payload, headers=headers
             ).json()
-            print(response)
             self.TOKEN = response["access_token"]
             self.RTOKEN = response["refresh_token"]
             self.EXPIRES_IN = response["expires_in"]
@@ -141,7 +139,6 @@ class SafeHaven:
             response = requests.post(
                 self.BASE_URL + url, json=payload, headers=headers
             ).json()
-            print(response)
             self.TOKEN = response["access_token"]
             self.RTOKEN = response["refresh_token"]
             self.EXPIRES_IN = response["expires_in"]

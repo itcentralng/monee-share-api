@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
-from utils.db import DB
-from utils.haven import SafeHaven
+from lib.db import DB
+from lib._safehaven import SafeHaven
 from accounts import (
-    account as account_controller,
+    controller as account_controller,
     db as account_DB,
     bank as account_haven,
 )
-from utility import utility
-from transactions import transaction
+from utility import controller
+from transactions import controller
 
 
 router = APIRouter()
@@ -116,14 +116,14 @@ async def receive_sms(request: Request):
 
     # UTIL
     elif "util" in msg:
-        response = await utility.buy(
+        response = await controller.buy(
             {"sender_account": sender_account, "command": command}
         )
     # END OF UTIL
 
     # TRANSFER
     elif "send" in msg:
-        response = await transaction.send(
+        response = await controller.send(
             {
                 "sender": sender,
                 "sender_account": sender_account,

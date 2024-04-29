@@ -25,30 +25,51 @@ class Responses(StrEnum):
         "   example usage -> util 20000 31xxxxxxxx."
     )
 
+
+class FormatResponses(StrEnum):
     NOT_UNDERSTOOD = "Your command was not understood. Please try again or send 'help', to see all commands."
+
+    BAD_FORMAT = (
+        "Your command was not formated correctly. Send 'help' for more information"
+    )
 
     NO_COMMAND_FOUND = (
         "No command found. Please try again or send 'help', to see all commands."
     )
 
-    BALANCE = "Your balance is {balance}."
 
+class AccountResponses(StrEnum):
+    BALANCE = "Your balance is {balance}."
+    CREATE_SUCCESS = "Your account Was created successfully\n" + Responses.HELP
+    CREATE_FAIL = "There was a problem creating an account for {phone_number}"
+
+
+class PinResponses(StrEnum):
+    PIN_CONFIRMATION = "You will get a call from us to enter your PIN"
     PIN_INCORRECT = "PIN incorrect. You have {attempts} attempts left."
     PIN_CORRECT = "PIN correct. Your transaction will be processed shortly."
 
+
+class TransferResponses(StrEnum):
     SEND_CONFIRMATION = "You are sending N{amount} to {beneficiary}."
 
     SEND_EXISTS_SENDER = (
-        "You have successfully sent N{amount} to {beneficiary}.\n" + BALANCE
+        "You have successfully sent N{amount} to {beneficiary}.\n"
+        + AccountResponses.BALANCE
     )
-    SEND_EXISTS_RECEIVER = "You have recieved N{amount} from {sender}.\n" + BALANCE
+    SEND_EXISTS_RECEIVER = (
+        "You have recieved N{amount} from {sender}.\n" + AccountResponses.BALANCE
+    )
 
     SEND_NOT_EXIST_SENDER = (
         "An account was created for {beneficiary}.\n"
-        "Your have successfully sent N{amount} to {beneficiary}.\n" + BALANCE
+        "Your have successfully sent N{amount} to {beneficiary}.\n"
+        + AccountResponses.BALANCE
     )
-    SEND_NOT_EXIST_RECEIVER = HELP + "\n" + SEND_EXISTS_RECEIVER
+    SEND_NOT_EXIST_RECEIVER = Responses.HELP + "\n" + SEND_EXISTS_RECEIVER
 
+
+class UtilResponses(StrEnum):
     UTIL_CONFIRM = (
         "You are buying N{amount} unit for\n"
         "Meter Name: {meter_owner}.\n"
@@ -56,7 +77,5 @@ class Responses(StrEnum):
         "You will receive a call from us to enter your pin number"
     )
 
-    UTIL_SUCCESS = "You token is \n" "{token}\n" + BALANCE
-    UTIL_VERIFICATION_FAILED = (
-        "We were unable to find find your meter. Check the meter number and try again."
-    )
+    UTIL_SUCCESS = "You token is \n" "{token}\n" + AccountResponses.BALANCE
+    UTIL_VERIFICATION_FAILED = "We were unable to find find your meter. Check the meter number ({meter_number}) and try again."

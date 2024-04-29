@@ -1,6 +1,4 @@
 from fastapi import FastAPI
-from lib.db import convex_client as database
-from lib._safehaven import safehaven_client as haven
 import os
 from dotenv import load_dotenv
 import requests
@@ -9,7 +7,7 @@ load_dotenv()
 app = FastAPI()
 
 
-def make_call(to_number):
+async def make_call(to_number):
     # Load values from .env file or any other configuration mechanism you're using
     account_sid = os.getenv("SIGNALWIRE_PROJECT_ID")
     auth_token = os.getenv("SIGNALWIRE_AUTHTOKEN")

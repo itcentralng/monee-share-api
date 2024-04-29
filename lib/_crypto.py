@@ -31,5 +31,4 @@ with open(file_path, "r") as file:
 def generate_accertion():
     # Generate the JWT token
     token = jwt.encode(payload, private_key, algorithm="RS256")
-    print(token)
     return token

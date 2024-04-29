@@ -3,10 +3,10 @@ from fastapi import Request, FastAPI, Response
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.twiml.voice_response import VoiceResponse, Gather
 from dotenv import load_dotenv
-from accounts import account as account_controller
-from utility import utility
-from transactions import transaction
-from messages import db as msg_database
+from accounts import controller as account_controller
+from utility import controller as util_controller
+from transactions import controller
+from messages import controller as msg_database
 import lib._signalwire as sigalwire
 from transactions import db as transaction_db
 from lib._africastalking import AfricasTalking
@@ -97,7 +97,7 @@ async def receive_sms(request: Request):
         if len(command) < 4:
             response = f'Information provided is not formatted correctly. please send "help" for details on the command'
         else:
-            verification_response = await utility.verify(
+            verification_response = await util_controller.verify(
                 {"sender_account": sender_account, "command": command}
             )
             if verification_response:
@@ -118,7 +118,7 @@ async def receive_sms(request: Request):
 
     # TRANSFER
     elif "send" in Body and "error" not in sender_account:
-        response = await transaction.send(
+        response = await controller.send(
             {
                 "sender_account": sender_account,
                 "command": command,
@@ -171,13 +171,13 @@ async def call_handler(request: Request):
 
             if transaction_type == "transfer":
                 trasaction_response, transaction_status = (
-                    await transaction.make_transfer(
+                    await controller.make_transfer(
                         sender_account, transct.get("command").split()[2]
                     )
                 )
                 print(trasaction_response)
             elif transaction_type == "util":
-                util_response = await utility.buy(
+                util_response = await util_controller.buy(
                     {
                         "sender_account": sender_account,
                         "command": transct.get("command"),

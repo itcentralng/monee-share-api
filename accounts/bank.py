@@ -15,13 +15,12 @@ async def get_accounts():
 
 
 async def get_account(account_id):
-    print(account_id)
 
     url = f"/accounts/{account_id}"
 
     try:
         response = await safehaven_client.get(url)
-        return response
+        return response["data"]
 
     except Exception as error:
         print(error)

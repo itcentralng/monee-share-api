@@ -1,8 +1,8 @@
 from . import db as database
 from . import bank as haven
-from accounts import account
-from lib.sms import AfricasTalking
-from messages import db as msg_database
+from accounts import controller
+from lib._africastalking import AfricasTalking
+from messages import controller as msg_database
 from transactions import db as transaction_db
 
 af_sms = AfricasTalking()
@@ -11,17 +11,19 @@ af_sms = AfricasTalking()
 async def send(data):
     (sender_account, command) = data.values()
 
-    has_funds, balance = await account.has_funds(
+    has_funds, balance = await controller.has_funds(
         {"account_id": sender_account.get("safehavenId"), "amount": command[1]}
     )
     # if not has_funds:
     if False:
         response = f"Insufficient funds !.\nAccount balance: N{balance}. \nFund your account and try again"
     else:
-        receiver_account_db = await account.get_account_from_db({"phone": command[2]})
+        receiver_account_db = await controller.get_account_from_db(
+            {"phone": command[2]}
+        )
 
         if not receiver_account_db.get("_id"):
-            receiver_account = await account.create(
+            receiver_account = await controller.create(
                 {"sender": command[2], "command": command}
             )
 
@@ -70,7 +72,7 @@ async def send(data):
                     }
                 )
         else:
-            receiver_account = await account.get_account_from_haven(
+            receiver_account = await controller.get_account_from_haven(
                 {"account_id": receiver_account_db.get("safehavenId")}
             )
             receiver_account = receiver_account.get("data")
@@ -96,7 +98,7 @@ async def send(data):
 
 
 async def make_transfer(sender_account, command):
-    beneficiary = await account.get_account_from_db({"phone": command[2]})
+    beneficiary = await controller.get_account_from_db({"phone": command[2]})
     response = None
     status = None
 
@@ -132,7 +134,7 @@ async def make_transfer(sender_account, command):
                 status = "ok"
                 af_sms.send(response, [sender_account.get("phone")])
 
-                beneficiary_account = await account.get_account_from_haven(
+                beneficiary_account = await controller.get_account_from_haven(
                     {"account_id": beneficiary.get("safehavenId")}
                 )
                 receiver_response = f'You received N{command[1]} from {sender_account.get("firstName")}.\n\nYour new balance: N{beneficiary_account.get("data")["accountBalance"]}'
