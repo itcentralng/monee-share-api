@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from typing import Annotated
+from fastapi import Depends, FastAPI, Form, Request
 from sms import controller as sms_controller
 from sms.model import SMSModel
 from templates.response_templates import (
@@ -30,8 +31,31 @@ async def index():
     return {"app": "Monee Share", "status": "ok"}
 
 
+# def get_sms_data(
+#     date: str | None = Form(default=None),
+#     from_: str = Form(alias="from"),
+#     id: str | None = Form(default=None),
+#     linkId: str | None = Form(default=None),
+#     text: str = Form(...),
+#     to: str | None = Form(default=None),
+#     networkCode: str | None = Form(default=None),
+# ):
+#     return SMSModel(
+#         date=date,
+#         from_=from_,
+#         id=id,
+#         linkId=linkId,
+#         text=text,
+#         to=to,
+#         networkCode=networkCode,
+#     )
+async def get_sms_data(request: Request):
+    data = await request.form()
+    return SMSModel(**data._dict)
+
+
 @app.post("/sms")
-async def receive_sms(sms: SMSModel):
+async def receive_sms(sms: Annotated[SMSModel, Depends(get_sms_data)]):
     user_phone = sms.from_
     command_str = sms.text.lower()
     print("user query: " + command_str)
@@ -47,7 +71,7 @@ async def receive_sms(sms: SMSModel):
     # COMMANDS WITHOUT EXTRA PARAMETERS
     match command:
         case "help":
-            return command_controller.help(user_phone, True)
+            return await command_controller.help(user_phone, command_str, True)
 
     match command:
         case "balance":
@@ -66,19 +90,13 @@ async def receive_sms(sms: SMSModel):
 
     ####################################
     # COMMANDS WITH EXTRA PARAMETERS (x2)
-    if len(user_query_list) < 3:
+    if len(user_query_list) < 4:
         await sms_controller.send_sms(FormatResponses.BAD_FORMAT, [user_phone])
         return {"message": FormatResponses.BAD_FORMAT}
 
     match command:
         case "util":
-            # await sms_controller.send_sms(Responses.UTIL_CONFIRM, [user_phone])
-            # response = await util_controller.util(
-            #     {"user": sender_bank_account, "user_query_list": user_query_list}
-            # )
-            # print(response)
-            # return response
-            pass
+            return await command_controller.util(user_phone, user_query_list, True)
         case "send":
             # await sms_controller.send_sms(Responses.SEND_CONFIRMATION, [user_phone])
             return TransferResponses.SEND_CONFIRMATION

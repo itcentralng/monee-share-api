@@ -13,6 +13,8 @@ async def get_account_from_db(phone: str):
 
 async def get_account_from_haven(account_id: str):
     account = await haven.get_account(account_id)
+    if "error" in account:
+        return account
     return SafeHavenAccount(**account)
 
 

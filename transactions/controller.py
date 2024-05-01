@@ -1,7 +1,7 @@
-from urllib import response
 from transactions import db
 from accounts import controller as account_controller
 from transactions.models import TransactionInputModel
+from utility import controller as util_controller
 
 
 async def get_and_perform(phone: str):
@@ -13,13 +13,15 @@ async def get_and_perform(phone: str):
         user_query_list = text.split(" ")
         command = user_query_list[0]
 
-        print("Command: " + command)
+        print(f"Command: {command}\nUser: {phone}")
 
-        match transaction.command:
+        match command:
             case "balance":
                 response = await account_controller.perform_get_balance(phone)
             case "util":
-                pass
+                response = await util_controller.perform_pay_util(
+                    phone, user_query_list
+                )
             case "send":
                 pass
 

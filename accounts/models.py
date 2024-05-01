@@ -25,7 +25,7 @@ class SubAccount(BaseModel):
 
 
 class SafeHavenAccount(BaseModel):
-    accountNumber: float
+    accountNumber: str
     accountName: str
     accountType: str
     bvn: str

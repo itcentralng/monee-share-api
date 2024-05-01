@@ -40,6 +40,4 @@ async def call_handler(call: Annotated[CallModel, Depends(get_data)]):
         return PinResponses.PIN_INCORRECT
 
     response = await transaction_controller.get_and_perform(user_phone)
-    print(response)
-
-    # return transaction
+    return response
