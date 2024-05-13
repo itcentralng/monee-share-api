@@ -181,7 +181,7 @@ async def call_handler(request: Request):
                 response = await utility.buy(
                     {
                         "sender_account": sender_account,
-                        "command": transct.get("command"),
+                        "command": transct.get("command").split()[2],
                     }
                 )
 
