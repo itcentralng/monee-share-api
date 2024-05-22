@@ -41,7 +41,7 @@ class SafeHaven:
             self.ACCERTION = generate_accertion()
             await self.get_token()
             response = requests.post(self.BASE_URL + url, json=payload, headers=headers)
-        if (
+        elif (
             "message" in response.json()
             and "expired token" in response.json()["message"].lower()
             and self.RTOKEN

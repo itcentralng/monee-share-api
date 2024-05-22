@@ -25,7 +25,7 @@ async def send(data):
                 {"sender": command[2], "command": command}
             )
 
-            if receiver_account.get("_id"):
+            if "id" in receiver_account:
                 response = f"""Welcome to Monee Share
                     Your account was created successfully.
                     Use your phone number to send/receive money on Monee Share

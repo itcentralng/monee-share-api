@@ -45,6 +45,11 @@ async def receive_sms(request: Request):
         From = req.get("from")
         Body = req.get("text")
 
+    if "+234" not in From and not From.startswith("0"):
+        From = "+234" + From
+    elif From.startswith("0"):
+        From = "+234" + From[1:]
+
     Body = Body.lower()
     Body = Body.replace("mshare", "")
     command = Body.split()
@@ -100,6 +105,7 @@ async def receive_sms(request: Request):
             verification_response = await utility.verify(
                 {"sender_account": sender_account, "command": command}
             )
+            print(verification_response)
 
             if verification_response:
                 response = f"You are buying N{command[1]} unit for \nMeter Number: {command[2]}\nOwner: {verification_response['name']}. \n\nYou will get a call from us to enter your pin for confirmation"
@@ -152,6 +158,9 @@ async def call_handler(request: Request):
     req = await request.form()
     digits = req.get("Digits")
     To = req.get("To")
+    if "+234" not in To:
+        To = req.get("From")
+
     response = VoiceResponse()
 
     sender_account = await account_controller.get_account_from_db({"phone": To})

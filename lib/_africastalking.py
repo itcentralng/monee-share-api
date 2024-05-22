@@ -7,7 +7,8 @@ load_dotenv()
 
 africastalking.initialize(
     username=os.environ.get("AFRICASTALKING_USERNAME"),
-    api_key=os.environ.get("AFRICASTALKING_API_KEY"),
+    api_key=os.environ.get("AFRICASTALKING_API_KEY_LIVE"),
+    # api_key=os.environ.get("AFRICASTALKING_API_KEY"),
 )
 
 
