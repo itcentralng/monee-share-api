@@ -83,13 +83,24 @@ async def receive_sms(sms: Annotated[SMSModel, Depends(get_sms_data)]):
         await sms_controller.send_sms(FormatResponses.BAD_FORMAT, [user_phone])
         return {"message": FormatResponses.BAD_FORMAT}
 
-    # match command:
-    #     case "create":
-    #         await sms_controller.send_sms(Responses.SEND_CONFIRMATION, [user_phone])
-    #         return {"message": AccountResponses.CREATE_SUCCESS}
+    match command:
+        case "create":
+            return await command_controller.create(user_phone, user_query_list, True)
 
     ####################################
     # COMMANDS WITH EXTRA PARAMETERS (x2)
+    if len(user_query_list) < 3:
+        await sms_controller.send_sms(FormatResponses.BAD_FORMAT, [user_phone])
+        return {"message": FormatResponses.BAD_FORMAT}
+
+    match command:
+        case "send":
+            return await command_controller.transfer_funds(
+                user_phone, user_query_list, True
+            )
+
+    ####################################
+    # COMMANDS WITH EXTRA PARAMETERS (x4)
     if len(user_query_list) < 4:
         await sms_controller.send_sms(FormatResponses.BAD_FORMAT, [user_phone])
         return {"message": FormatResponses.BAD_FORMAT}
@@ -97,9 +108,6 @@ async def receive_sms(sms: Annotated[SMSModel, Depends(get_sms_data)]):
     match command:
         case "util":
             return await command_controller.util(user_phone, user_query_list, True)
-        case "send":
-            # await sms_controller.send_sms(Responses.SEND_CONFIRMATION, [user_phone])
-            return TransferResponses.SEND_CONFIRMATION
         case _:
-            # await sms_controller.send_sms(Responses.NOT_UNDERSTOOD, [user_phone])
+            await sms_controller.send_sms(FormatResponses.NOT_UNDERSTOOD, [user_phone])
             return FormatResponses.NOT_UNDERSTOOD

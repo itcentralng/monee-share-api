@@ -46,7 +46,7 @@ class FormatResponses(StrEnum):
 
 class AccountResponses(StrEnum):
     BALANCE = "Your balance is {balance}."
-    CREATE_SUCCESS = "Your account Was created successfully\n" + Responses.HELP
+    CREATE_SUCCESS = "Your account Was created successfully\n" + Responses.HELP_SHORT
     CREATE_FAIL = "There was a problem creating an account for {phone_number}"
 
 
@@ -57,7 +57,7 @@ class PinResponses(StrEnum):
 
 
 class TransferResponses(StrEnum):
-    SEND_CONFIRMATION = "You are sending N{amount} to {beneficiary}."
+    SEND_CONFIRMATION = "You are sending N{amount} to {beneficiary}. You will get a call to confirm this transaction"
 
     SEND_EXISTS_SENDER = (
         "You have successfully sent N{amount} to {beneficiary}.\n"
@@ -73,6 +73,7 @@ class TransferResponses(StrEnum):
         + AccountResponses.BALANCE
     )
     SEND_NOT_EXIST_RECEIVER = Responses.HELP + "\n" + SEND_EXISTS_RECEIVER
+    INSUFFICIENT_FUNDS = "Insufficient funds. Fund account and try again"
 
 
 class UtilResponses(StrEnum):

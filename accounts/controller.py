@@ -1,5 +1,5 @@
 from accounts.models import DBAccount, SafeHavenAccount, CreateAccountParam
-from templates.response_templates import AccountResponses
+from templates.response_templates import AccountResponses, TransferResponses
 from . import db as database
 from . import bank as haven
 from accounts import controller as account_controller
@@ -8,6 +8,8 @@ from messages import controller as message_controller
 
 async def get_account_from_db(phone: str):
     account = await database.get_account(phone)
+    if "error" in account:
+        return account
     return DBAccount(**account)
 
 
@@ -58,41 +60,48 @@ async def verify_pin(data):
     return await database.verify_pin(phone, pin)
 
 
-# async def create(data: CreateAccountParam):
-#     print(data.user)
+async def create(user_phone: str, nin: str):
+    response = "Sorry this command is currently unavailable"
+    bot_message = {
+        "content": response,
+        "role": "bot",
+        "phone": user_phone,
+    }
+    await message_controller.add_message(bot_message)
+    return response
 
 
-# async def create(data):
-#     sender, command = data.values()
+async def transfer_funds(amount: str, user_phone: str, beneficiary: str):
+    user_db_account = await get_account_from_db(user_phone)
+    if "error" in user_db_account:
+        response = [False, "It seems you don't have an account"]
+    else:
+        user_bank_account = await get_account_from_haven(user_db_account.safehavenId)
+        if "error" in user_bank_account:
+            response = [False, "Something went wrong, Try again"]
+        else:
+            beneficiary_db_account = await get_account_from_db(beneficiary)
 
-#     payload = {
-#         "firstName": f"customer_{sender.replace('+','')}",
-#         "phoneNumber": sender,
-#         "emailAddress": f"customer_{sender.replace('+','')}@moneeshare.com",
-#         "externalReference": f"{sender.replace('+','')}",
-#     }
-#     account = await haven.create_account(payload)
-#     print(account)
+            if "error" in beneficiary_db_account:
+                response = [
+                    False,
+                    "Beneficiary does not have an account. Account creation is temporarily unavailable",
+                ]
+            else:
+                if user_bank_account.accountBalance <= int(amount):
+                    response = [False, TransferResponses.INSUFFICIENT_FUNDS]
+                else:
+                    response = [
+                        True,
+                        TransferResponses.SEND_CONFIRMATION.format(
+                            amount=amount, beneficiary=beneficiary
+                        ),
+                    ]
 
-#     if not account.get("data"):
-#         response = f"There was a problem creating account. Please try again later"
-#         return response
-#     else:
-#         account = account.get("data")
-#         payload = {
-#             "safehavenId": account.get("_id"),
-#             "firstName": account.get("subAccountDetails")["firstName"],
-#             "lastName": account.get("subAccountDetails")["lastName"],
-#             "phone": account.get("subAccountDetails")["phoneNumber"],
-#             "email": account.get("subAccountDetails")["emailAddress"],
-#             "account": account.get("accountNumber"),
-#             "bvn": "",
-#             "nin": command[1],
-#             "password": "password",
-#             "pin": "1234",
-#         }
-
-#         db_response = await database.create_account(payload)
-#         print(db_response)
-
-#     return account
+    bot_message = {
+        "content": response[1],
+        "role": "bot",
+        "phone": user_phone,
+    }
+    await message_controller.add_message(bot_message)
+    return response

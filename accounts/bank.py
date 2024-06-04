@@ -51,3 +51,36 @@ async def has_funds(account_id, amount):
 
     elif account.get("statusCode") == 403:
         return [False, None]
+
+
+async def initiate_verify_nin(payload):
+    url = "/identity/v2"
+
+    try:
+        response = await safehaven_client.post(url, payload, has_token=True)
+        if response["statusCode"] != 200:
+            return [False, response.get("data")["_id"]]
+        return [True, response.get("data")["_id"]]
+
+    except Exception as error:
+        print(error)
+        return {"error": "Could not create account"}
+
+
+async def confirm_nin_verification(nin):
+    url = "/identity/v2/validate"
+    payload = {
+        "type": "NIN",
+        "async": False,
+        "number": nin,
+        "debitAccountNumber": "000xxxxxxx",
+    }
+    try:
+        response = await safehaven_client.post(url, payload, has_token=True)
+        if response["statusCode"] != 200:
+            return [False, response.get("data")["_id"]]
+        return [True, response.get("data")["_id"]]
+
+    except Exception as error:
+        print(error)
+        return {"error": "Could not create account"}

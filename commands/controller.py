@@ -1,3 +1,4 @@
+from accounts.models import CreateAccountParam, DBAccount
 from lib import _signalwire as signalwire
 from accounts import controller as account_controller
 from messages import controller as message_controller
@@ -135,6 +136,39 @@ async def util(user_phone: str, user_query_list: str, willSendSMS: bool):
         }
         await message_controller.add_messages(user_message, bot_message)
 
-        return UtilResponses.UTIL_VERIFICATION_FAILED.format(
-            meter_number=user_query_list[2]
+        return {
+            "message": UtilResponses.UTIL_VERIFICATION_FAILED.format(
+                meter_number=user_query_list[2]
+            )
+        }
+
+
+async def create(user_phone: str, user_query_list: str, willSendSMS: bool):
+    response = await account_controller.create(user_phone, user_query_list[1])
+    if willSendSMS:
+        await sms_controller.send_sms(response, [user_phone])
+    return {"message": response}
+
+
+async def transfer_funds(user_phone: str, user_query_list: str, willSendSMS: bool):
+    response = await account_controller.transfer_funds(
+        user_query_list[1], user_phone, user_query_list[2]
+    )
+    if response[0]:
+        await transaction_controller.add_transaction(
+            {
+                "command": " ".join(user_query_list),
+                "status": "pending",
+                "type": "transfer",
+                "user": user_phone,
+            }
         )
+
+        if willSendSMS:
+            await sms_controller.send_sms(PinResponses.PIN_CONFIRMATION, [user_phone])
+        await signalwire.make_call(user_phone)
+
+    else:
+        if willSendSMS:
+            await sms_controller.send_sms(response, [user_phone])
+    return response
